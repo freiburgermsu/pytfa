@@ -20,7 +20,7 @@ def apply_reaction_variability(tmodel, va, inplace = True):
 
         min_bound = va.loc[this_reaction.id,'minimum']
         max_bound = va.loc[this_reaction.id,'maximum']
-        
+
         # Handle numerical precision issues where min > max by a tiny amount
         if min_bound > max_bound:
             # Use the average of the two values
@@ -28,8 +28,14 @@ def apply_reaction_variability(tmodel, va, inplace = True):
             min_bound = avg_bound
             max_bound = avg_bound
 
-        this_reaction.lower_bound = min_bound
-        this_reaction.upper_bound = max_bound
+        try:
+            this_reaction.lower_bound = min_bound
+            this_reaction.upper_bound = max_bound
+        except ValueError:
+            # The new window lies entirely outside the current bounds: widen
+            # from the other end first so the assignments never cross.
+            this_reaction.upper_bound = max_bound
+            this_reaction.lower_bound = min_bound
 
     return _tmodel
 
@@ -53,8 +59,12 @@ def apply_generic_variability(tmodel,va, inplace = True):
 
     for varname in va.index:
         the_min,the_max = va.loc[varname,['minimum','maximum']]
-        _tmodel._var_dict[varname].variable.lb = the_min
-        _tmodel._var_dict[varname].variable.ub = the_max
+        try:
+            _tmodel._var_dict[varname].variable.lb = the_min
+            _tmodel._var_dict[varname].variable.ub = the_max
+        except ValueError:
+            _tmodel._var_dict[varname].variable.ub = the_max
+            _tmodel._var_dict[varname].variable.lb = the_min
 
     return _tmodel
 
