@@ -203,12 +203,15 @@ def is_exchange(rxn):
     return len(rxn.metabolites) == 1
 
 
-def get_reaction_compartment(reaction):
-    """Get the compartment of a reaction to then prepare it for conversion."""
+def get_reaction_compartment(reaction, default='c'):
+    """Get the compartment of a reaction to then prepare it for conversion.
+
+    Reactions spanning several compartments are assigned to ``default``.
+    """
     comp = None
     for met in reaction.metabolites:
         if comp is None:
             comp = met.compartment
         elif met.compartment != comp:
-            comp = 'c'
+            comp = default
     return comp
