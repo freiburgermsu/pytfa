@@ -333,11 +333,15 @@ class ThermoModel(LCSBModel, Model):
             self._proton_of = proton
 
         # Reactions spanning several compartments are balanced with the proton
-        # of the cytosol, 'c' in BiGG models and 'c0' in ModelSEED models
-        if "c" not in proton and "c0" in proton:
+        # of the cytosol, 'c' in BiGG models and 'c0' in ModelSEED models. A
+        # community model has one cytosol per member, 'c1', 'c2', ..., and each
+        # reaction is then balanced with the proton of its own compartment.
+        if "c" in proton:
+            self._transport_compartment = "c"
+        elif "c0" in proton:
             self._transport_compartment = "c0"
         else:
-            self._transport_compartment = "c"
+            self._transport_compartment = None
 
         # Iterate over each reaction
         for i in range(num_rxns):

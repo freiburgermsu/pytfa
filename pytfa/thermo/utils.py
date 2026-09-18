@@ -206,12 +206,20 @@ def is_exchange(rxn):
 def get_reaction_compartment(reaction, default='c'):
     """Get the compartment of a reaction to then prepare it for conversion.
 
-    Reactions spanning several compartments are assigned to ``default``.
+    Reactions spanning several compartments are assigned to ``default``. If
+    ``default`` is None, which :meth:`ThermoModel.prepare` uses for models
+    without a single cytosol, they are assigned the one compartment left once
+    the extracellular ones are set aside - the member's own cytosol in a
+    community model - and None if that is still ambiguous.
     """
-    comp = None
-    for met in reaction.metabolites:
-        if comp is None:
-            comp = met.compartment
-        elif met.compartment != comp:
-            comp = default
-    return comp
+    comps = {met.compartment for met in reaction.metabolites}
+
+    if len(comps) == 1:
+        return comps.pop()
+    if not comps:
+        return None
+    if default is not None:
+        return default
+
+    inside = {x for x in comps if not x.startswith('e')}
+    return inside.pop() if len(inside) == 1 else None
